@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Fw3.QbAgent.Core/Fw3.QbAgent.Core.csproj" />
+    <Project Path="src/Fw3.QbAgent.Host/Fw3.QbAgent.Host.csproj" />
+    <Project Path="src/Fw3.QbAgent.QuickBooks/Fw3.QbAgent.QuickBooks.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Fw3.QbAgent.Tests/Fw3.QbAgent.Tests.csproj" />
+  </Folder>
+</Solution>

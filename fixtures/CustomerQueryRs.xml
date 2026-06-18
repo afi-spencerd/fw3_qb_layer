@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?qbxml version="16.0"?>
+<QBXML>
+  <QBXMLMsgsRs>
+    <CustomerQueryRs requestID="1" statusCode="0" statusSeverity="Info" statusMessage="Status OK">
+      <CustomerRet>
+        <ListID>80000001-1500000001</ListID>
+        <TimeCreated>2023-01-10T09:00:00-08:00</TimeCreated>
+        <TimeModified>2024-02-15T14:30:00-08:00</TimeModified>
+        <EditSequence>1581550000</EditSequence>
+        <Name>Acme Manufacturing</Name>
+        <FullName>Acme Manufacturing</FullName>
+        <IsActive>true</IsActive>
+        <CompanyName>Acme Manufacturing Inc.</CompanyName>
+        <Phone>555-0100</Phone>
+        <Email>ap@acme.example</Email>
+      </CustomerRet>
+      <CustomerRet>
+        <ListID>80000002-1500000002</ListID>
+        <TimeCreated>2023-03-22T11:15:00-07:00</TimeCreated>
+        <TimeModified>2023-03-22T11:15:00-07:00</TimeModified>
+        <EditSequence>1679508900</EditSequence>
+        <Name>Brightline Labs</Name>
+        <FullName>Brightline Labs</FullName>
+        <IsActive>true</IsActive>
+        <CompanyName>Brightline Laboratories LLC</CompanyName>
+        <FirstName>Dana</FirstName>
+        <LastName>Reyes</LastName>
+        <Phone>555-0144</Phone>
+        <Email>dana@brightline.example</Email>
+      </CustomerRet>
+    </CustomerQueryRs>
+  </QBXMLMsgsRs>
+</QBXML>

@@ -1,0 +1,18 @@
+## .NET
+bin/
+obj/
+*.user
+.vs/
+
+## Build / publish output
+[Pp]ublish/
+artifacts/
+
+## Local secrets / overrides (never commit real API keys)
+appsettings.*.local.json
+secrets.json
+
+## Logs / local data (durable data lives under C:\ProgramData\Fw3QbAgent)
+logs/
+data/
+*.log
