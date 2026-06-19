@@ -33,4 +33,13 @@ public interface IQuickBooksGateway
 
     /// <summary>Create an item in QuickBooks and return it including its new ListID and EditSequence.</summary>
     ItemDto AddItem(CreateItemRequest request, CancellationToken ct);
+
+    /// <summary>Query journal entries, optionally only those modified at/after <paramref name="updatedSince"/>.</summary>
+    IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct);
+
+    /// <summary>Fetch a single journal entry by its QuickBooks TxnID, or null if not found.</summary>
+    JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct);
+
+    /// <summary>Post a journal entry to QuickBooks and return it including its new TxnID and EditSequence.</summary>
+    JournalEntryDto AddJournalEntry(CreateJournalEntryRequest request, CancellationToken ct);
 }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?qbxml version="16.0"?>
+<QBXML>
+  <QBXMLMsgsRs>
+    <JournalEntryQueryRs requestID="1" statusCode="0" statusSeverity="Info" statusMessage="Status OK">
+      <JournalEntryRet>
+        <TxnID>2F1A-1718800000</TxnID>
+        <TimeCreated>2024-06-18T09:05:00-07:00</TimeCreated>
+        <TimeModified>2024-06-18T09:05:00-07:00</TimeModified>
+        <EditSequence>1718800000</EditSequence>
+        <TxnNumber>4012</TxnNumber>
+        <TxnDate>2024-06-18</TxnDate>
+        <RefNumber>WO-10042</RefNumber>
+        <JournalDebitLine>
+          <TxnLineID>1</TxnLineID>
+          <AccountRef><FullName>Inventory Asset:WIP Inventory</FullName></AccountRef>
+          <Amount>1250.00</Amount>
+          <Memo>Batch WO-10042: raw materials issued to production</Memo>
+        </JournalDebitLine>
+        <JournalCreditLine>
+          <TxnLineID>2</TxnLineID>
+          <AccountRef><FullName>Inventory Asset:Raw Materials Inventory</FullName></AccountRef>
+          <Amount>1250.00</Amount>
+          <Memo>Batch WO-10042: raw materials issued to production</Memo>
+        </JournalCreditLine>
+      </JournalEntryRet>
+      <JournalEntryRet>
+        <TxnID>3C7B-1718900000</TxnID>
+        <TimeCreated>2024-06-19T16:20:00-07:00</TimeCreated>
+        <TimeModified>2024-06-19T16:20:00-07:00</TimeModified>
+        <EditSequence>1718900000</EditSequence>
+        <TxnNumber>4013</TxnNumber>
+        <TxnDate>2024-06-19</TxnDate>
+        <RefNumber>WO-10042</RefNumber>
+        <JournalDebitLine>
+          <TxnLineID>1</TxnLineID>
+          <AccountRef><FullName>Inventory Asset:Finished Goods Inventory</FullName></AccountRef>
+          <Amount>1310.00</Amount>
+          <Memo>Batch WO-10042: completed to finished goods</Memo>
+        </JournalDebitLine>
+        <JournalCreditLine>
+          <TxnLineID>2</TxnLineID>
+          <AccountRef><FullName>Inventory Asset:WIP Inventory</FullName></AccountRef>
+          <Amount>1310.00</Amount>
+          <Memo>Batch WO-10042: completed to finished goods</Memo>
+        </JournalCreditLine>
+      </JournalEntryRet>
+    </JournalEntryQueryRs>
+  </QBXMLMsgsRs>
+</QBXML>

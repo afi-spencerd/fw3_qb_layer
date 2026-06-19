@@ -299,6 +299,140 @@
           }
         }
       }
+    },
+    "/journal-entries": {
+      "get": {
+        "tags": [
+          "JournalEntries"
+        ],
+        "summary": "List journal entries, optionally only those modified at or after 'updatedSince'.",
+        "operationId": "ListJournalEntries",
+        "parameters": [
+          {
+            "name": "updatedSince",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JournalEntryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "JournalEntries"
+        ],
+        "summary": "Post a journal entry to QuickBooks. Requires an Idempotency-Key header; replays are safe. QuickBooks enforces that debits equal credits.",
+        "operationId": "CreateJournalEntry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJournalEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/journal-entries/{txnId}": {
+      "get": {
+        "tags": [
+          "JournalEntries"
+        ],
+        "summary": "Fetch a single journal entry by its QuickBooks TxnID.",
+        "operationId": "GetJournalEntry",
+        "parameters": [
+          {
+            "name": "txnId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -445,6 +579,72 @@
               {
                 "$ref": "#/components/schemas/ItemOpeningBalance"
               }
+            ]
+          }
+        }
+      },
+      "CreateJournalEntryRequest": {
+        "required": [
+          "txnDate",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "txnDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "refNumber": {
+            "maxLength": 20,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isAdjustment": {
+            "type": "boolean"
+          },
+          "lines": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateJournalLine"
+            }
+          }
+        }
+      },
+      "CreateJournalLine": {
+        "required": [
+          "type",
+          "accountFullName",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/JournalLineType"
+          },
+          "accountFullName": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "memo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "entityFullName": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -737,6 +937,115 @@
           "NonInventory"
         ]
       },
+      "JournalEntryDto": {
+        "required": [
+          "txnId",
+          "editSequence",
+          "txnDate",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "txnId": {
+            "type": "string"
+          },
+          "editSequence": {
+            "type": "string"
+          },
+          "txnNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "txnDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "refNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isAdjustment": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntryLineDto"
+            }
+          },
+          "timeCreated": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "timeModified": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "JournalEntryLineDto": {
+        "required": [
+          "type",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "txnLineId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/JournalLineType"
+          },
+          "accountFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "memo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "entityFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "JournalLineType": {
+        "enum": [
+          "Debit",
+          "Credit"
+        ]
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -794,6 +1103,9 @@
     },
     {
       "name": "Items"
+    },
+    {
+      "name": "JournalEntries"
     }
   ]
 }

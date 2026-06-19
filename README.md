@@ -41,6 +41,9 @@ because the QuickBooks SDK is apartment-threaded COM and does not tolerate concu
 | GET    | `/items?updatedSince={iso}`        | List items of all types (inventory, non-inventory, …)|
 | GET    | `/items/{listId}`                  | One item, or `404`                                   |
 | POST   | `/items`                           | Create an item (`Inventory` or `NonInventory`); **requires `Idempotency-Key`**; returns `201` with `listId` + `editSequence` |
+| GET    | `/journal-entries?updatedSince={iso}` | List journal entries (with lines)                 |
+| GET    | `/journal-entries/{txnId}`         | One journal entry, or `404`                          |
+| POST   | `/journal-entries`                 | Post a journal entry (debit/credit lines); **requires `Idempotency-Key`**; returns `201` with `txnId` + `editSequence`. QuickBooks enforces that debits equal credits. |
 | GET    | `/openapi.json`                    | The OpenAPI contract (source of truth for the ERP client) |
 | —      | `/swagger`                         | Swagger UI for browsing endpoints/params             |
 

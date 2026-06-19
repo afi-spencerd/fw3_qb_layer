@@ -87,6 +87,9 @@ public class QbQueueWorkerTests
         public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct) => [];
         public ItemDto? GetItem(string listId, CancellationToken ct) => null;
         public ItemDto AddItem(CreateItemRequest request, CancellationToken ct) => throw new NotSupportedException();
+        public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct) => null;
+        public JournalEntryDto AddJournalEntry(CreateJournalEntryRequest request, CancellationToken ct) => throw new NotSupportedException();
     }
 
     private sealed class ThrowingGateway : IQuickBooksGateway
@@ -98,5 +101,8 @@ public class QbQueueWorkerTests
         public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct) => [];
         public ItemDto? GetItem(string listId, CancellationToken ct) => null;
         public ItemDto AddItem(CreateItemRequest request, CancellationToken ct) => throw new NotSupportedException();
+        public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct) => null;
+        public JournalEntryDto AddJournalEntry(CreateJournalEntryRequest request, CancellationToken ct) => throw new NotSupportedException();
     }
 }

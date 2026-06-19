@@ -126,6 +126,47 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
         return item ?? throw new QbAgentException(QbErrorCode.Internal, 500, "Fixture ItemAdd produced no item.");
     }
 
+    public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct)
+    {
+        var request = JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, txnId: null);
+        var responseXml = LoadFixture("JournalEntryQueryRs.xml");
+        _audit.Record("JournalEntryQuery", request, responseXml, null);
+
+        var (status, entries) = JournalEntryMapper.ParseQueryResponse(responseXml);
+        ThrowIfError(status);
+
+        if (updatedSince is { } since)
+        {
+            entries = entries.Where(e => e.TimeModified is null || e.TimeModified >= since).ToList();
+        }
+
+        return entries;
+    }
+
+    public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct)
+    {
+        var request = JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince: null, txnId);
+        var responseXml = LoadFixture("JournalEntryQueryRs.xml");
+        _audit.Record("JournalEntryQuery", request, responseXml, null);
+
+        var (status, entries) = JournalEntryMapper.ParseQueryResponse(responseXml);
+        ThrowIfError(status);
+
+        return entries.FirstOrDefault(e => e.TxnId == txnId);
+    }
+
+    public JournalEntryDto AddJournalEntry(CreateJournalEntryRequest request, CancellationToken ct)
+    {
+        var requestXml = JournalEntryMapper.BuildAddRequest(_options.QbXmlVersion, request);
+        var responseXml = SynthesizeJournalEntryAddResponse(request);
+        _audit.Record("JournalEntryAdd", requestXml, responseXml, null);
+
+        var (status, entry) = JournalEntryMapper.ParseAddResponse(responseXml);
+        ThrowIfError(status);
+
+        return entry ?? throw new QbAgentException(QbErrorCode.Internal, 500, "Fixture JournalEntryAdd produced no entry.");
+    }
+
     private static void ThrowIfError(QbStatus status)
     {
         if (status.IsError)
@@ -294,4 +335,68 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
 
     private static XElement AccountRefEl(string name, string? fullName) =>
         new(name, new XElement("FullName", fullName ?? ""));
+
+    private string SynthesizeJournalEntryAddResponse(CreateJournalEntryRequest r)
+    {
+        var now = DateTimeOffset.Now;
+        var ret = new XElement("JournalEntryRet",
+            new XElement("TxnID", SynthesizeTxnId(r)),
+            new XElement("TimeCreated", now.ToString("yyyy-MM-ddTHH:mm:ssK", CultureInfo.InvariantCulture)),
+            new XElement("TimeModified", now.ToString("yyyy-MM-ddTHH:mm:ssK", CultureInfo.InvariantCulture)),
+            new XElement("EditSequence", "1"),
+            new XElement("TxnNumber", "1001"),
+            new XElement("TxnDate", r.TxnDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
+        AddIfPresent(ret, "RefNumber", r.RefNumber);
+        if (r.IsAdjustment)
+        {
+            ret.Add(new XElement("IsAdjustment", "true"));
+        }
+
+        var lineNo = 0;
+        foreach (var line in r.Lines.Where(l => l.Type == JournalLineType.Debit))
+        {
+            ret.Add(BuildSynthLine("JournalDebitLine", line, ++lineNo));
+        }
+
+        foreach (var line in r.Lines.Where(l => l.Type == JournalLineType.Credit))
+        {
+            ret.Add(BuildSynthLine("JournalCreditLine", line, ++lineNo));
+        }
+
+        var doc = new XDocument(
+            new XProcessingInstruction("qbxml", $"version=\"{_options.QbXmlVersion}\""),
+            new XElement("QBXML",
+                new XElement("QBXMLMsgsRs",
+                    new XElement("JournalEntryAddRs",
+                        new XAttribute("requestID", "1"),
+                        new XAttribute("statusCode", "0"),
+                        new XAttribute("statusSeverity", "Info"),
+                        new XAttribute("statusMessage", "Status OK"),
+                        ret))));
+
+        return "<?xml version=\"1.0\" encoding=\"utf-8\"?>" + Environment.NewLine + doc;
+    }
+
+    private static XElement BuildSynthLine(string elementName, CreateJournalLine line, int lineNo)
+    {
+        var el = new XElement(elementName,
+            new XElement("TxnLineID", lineNo.ToString(CultureInfo.InvariantCulture)),
+            new XElement("AccountRef", new XElement("FullName", line.AccountFullName)),
+            new XElement("Amount", line.Amount.ToString("0.00", CultureInfo.InvariantCulture)));
+        AddIfPresent(el, "Memo", line.Memo);
+        if (!string.IsNullOrWhiteSpace(line.EntityFullName))
+        {
+            el.Add(new XElement("EntityRef", new XElement("FullName", line.EntityFullName)));
+        }
+
+        return el;
+    }
+
+    private static string SynthesizeTxnId(CreateJournalEntryRequest r)
+    {
+        var first = r.Lines.Count > 0 ? r.Lines[0] : null;
+        var basis = $"{r.RefNumber}|{r.TxnDate:yyyy-MM-dd}|{r.Lines.Count}|{first?.AccountFullName}|{first?.Amount}";
+        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(basis)));
+        return $"JE-{hash[..12]}";
+    }
 }

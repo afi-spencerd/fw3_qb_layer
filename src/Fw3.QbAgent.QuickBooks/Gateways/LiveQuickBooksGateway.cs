@@ -127,6 +127,38 @@ public sealed class LiveQuickBooksGateway : IQuickBooksGateway
             "QuickBooks reported success but returned no item.", status);
     }
 
+    public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct)
+    {
+        var requestXml = JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, txnId: null);
+        var (status, entries) = Run("JournalEntryQuery", requestXml, JournalEntryMapper.ParseQueryResponse);
+        ThrowIfError(status);
+        return entries;
+    }
+
+    public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct)
+    {
+        var requestXml = JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince: null, txnId);
+        var (status, entries) = Run("JournalEntryQuery", requestXml, JournalEntryMapper.ParseQueryResponse);
+
+        if (status.IsNoMatchingRecords)
+        {
+            return null;
+        }
+
+        ThrowIfError(status);
+        return entries.FirstOrDefault(e => e.TxnId == txnId);
+    }
+
+    public JournalEntryDto AddJournalEntry(CreateJournalEntryRequest request, CancellationToken ct)
+    {
+        var requestXml = JournalEntryMapper.BuildAddRequest(_options.QbXmlVersion, request);
+        var (status, entry) = Run("JournalEntryAdd", requestXml, JournalEntryMapper.ParseAddResponse);
+        ThrowIfError(status);
+
+        return entry ?? throw new QbAgentException(QbErrorCode.Internal, 500,
+            "QuickBooks reported success but returned no journal entry.", status);
+    }
+
     /// <summary>
     /// Open a session, submit the request, parse the response — auditing the exact qbXML exchange
     /// exactly once (in <c>finally</c>) whether it succeeds, fails, or throws. The caller decides how

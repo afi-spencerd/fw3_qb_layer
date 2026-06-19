@@ -121,6 +121,7 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/openapi.json", "FormulaWeb QuickBooks 
 app.MapHealthEndpoints();
 app.MapCustomerEndpoints();
 app.MapItemEndpoints();
+app.MapJournalEntryEndpoints();
 
 app.Run();
 
