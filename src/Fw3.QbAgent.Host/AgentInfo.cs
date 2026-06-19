@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fw3.QbAgent.Host;
 
@@ -13,6 +14,10 @@ public static class AgentInfo
             ?? "unknown";
 
     /// <summary>JSON options shared between endpoint responses and idempotency replay (de)serialization,
-    /// so a replayed response is byte-identical to the original.</summary>
-    public static JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web);
+    /// so a replayed response is byte-identical to the original. Enums are strings (stable, readable
+    /// contract for the ERP's generated client).</summary>
+    public static JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
 }

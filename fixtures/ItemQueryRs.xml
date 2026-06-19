@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?qbxml version="16.0"?>
+<QBXML>
+  <QBXMLMsgsRs>
+    <ItemQueryRs requestID="1" statusCode="0" statusSeverity="Info" statusMessage="Status OK">
+      <ItemInventoryRet>
+        <ListID>80000101-1500000101</ListID>
+        <TimeCreated>2023-02-01T08:00:00-08:00</TimeCreated>
+        <TimeModified>2024-05-10T13:00:00-07:00</TimeModified>
+        <EditSequence>1500000101</EditSequence>
+        <Name>Linalool</Name>
+        <FullName>Raw Materials:Aroma Chemicals:Linalool</FullName>
+        <IsActive>true</IsActive>
+        <ParentRef>
+          <FullName>Raw Materials:Aroma Chemicals</FullName>
+        </ParentRef>
+        <ManufacturerPartNumber>AC-LIN-001</ManufacturerPartNumber>
+        <PurchaseDesc>Linalool, natural (kg)</PurchaseDesc>
+        <PurchaseCost>42.50</PurchaseCost>
+        <IncomeAccountRef><FullName>Sales:Material Resale</FullName></IncomeAccountRef>
+        <COGSAccountRef><FullName>Cost of Goods Sold:COGS - Raw Materials</FullName></COGSAccountRef>
+        <AssetAccountRef><FullName>Inventory Asset:Raw Materials Inventory</FullName></AssetAccountRef>
+        <QuantityOnHand>320</QuantityOnHand>
+        <AverageCost>41.80</AverageCost>
+      </ItemInventoryRet>
+      <ItemInventoryRet>
+        <ListID>80000102-1500000102</ListID>
+        <TimeCreated>2023-04-15T09:30:00-07:00</TimeCreated>
+        <TimeModified>2024-06-01T10:15:00-07:00</TimeModified>
+        <EditSequence>1500000102</EditSequence>
+        <Name>Bergamot Bloom 50ml</Name>
+        <FullName>Finished Goods:Bergamot Bloom 50ml</FullName>
+        <IsActive>true</IsActive>
+        <ParentRef>
+          <FullName>Finished Goods</FullName>
+        </ParentRef>
+        <SalesDesc>Bergamot Bloom Eau de Parfum, 50ml</SalesDesc>
+        <SalesPrice>89.00</SalesPrice>
+        <IncomeAccountRef><FullName>Sales:Fragrance Sales</FullName></IncomeAccountRef>
+        <COGSAccountRef><FullName>Cost of Goods Sold:COGS - Finished Goods</FullName></COGSAccountRef>
+        <AssetAccountRef><FullName>Inventory Asset:Finished Goods Inventory</FullName></AssetAccountRef>
+        <QuantityOnHand>140</QuantityOnHand>
+        <AverageCost>23.10</AverageCost>
+      </ItemInventoryRet>
+      <ItemInventoryRet>
+        <ListID>80000103-1500000103</ListID>
+        <TimeCreated>2023-02-20T11:00:00-08:00</TimeCreated>
+        <TimeModified>2024-03-22T16:45:00-07:00</TimeModified>
+        <EditSequence>1500000103</EditSequence>
+        <Name>Glass Bottle 50ml</Name>
+        <FullName>Packaging:Glass Bottle 50ml</FullName>
+        <IsActive>true</IsActive>
+        <ParentRef>
+          <FullName>Packaging</FullName>
+        </ParentRef>
+        <ManufacturerPartNumber>PKG-GB-50</ManufacturerPartNumber>
+        <PurchaseDesc>Frosted glass bottle, 50ml, with pump</PurchaseDesc>
+        <PurchaseCost>1.85</PurchaseCost>
+        <IncomeAccountRef><FullName>Sales:Material Resale</FullName></IncomeAccountRef>
+        <COGSAccountRef><FullName>Cost of Goods Sold:COGS - Packaging</FullName></COGSAccountRef>
+        <AssetAccountRef><FullName>Inventory Asset:Packaging Inventory</FullName></AssetAccountRef>
+        <QuantityOnHand>5200</QuantityOnHand>
+        <AverageCost>1.72</AverageCost>
+      </ItemInventoryRet>
+      <ItemNonInventoryRet>
+        <ListID>80000104-1500000104</ListID>
+        <TimeCreated>2023-05-01T09:00:00-07:00</TimeCreated>
+        <TimeModified>2024-01-05T09:00:00-08:00</TimeModified>
+        <EditSequence>1500000104</EditSequence>
+        <Name>Inbound Freight</Name>
+        <FullName>Inbound Freight</FullName>
+        <IsActive>true</IsActive>
+        <SalesOrPurchase>
+          <Desc>Inbound freight on raw materials</Desc>
+          <Price>0.00</Price>
+          <AccountRef><FullName>Cost of Goods Sold:Freight In</FullName></AccountRef>
+        </SalesOrPurchase>
+      </ItemNonInventoryRet>
+    </ItemQueryRs>
+  </QBXMLMsgsRs>
+</QBXML>

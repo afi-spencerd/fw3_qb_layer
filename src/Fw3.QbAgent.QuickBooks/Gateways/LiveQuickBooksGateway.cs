@@ -95,6 +95,38 @@ public sealed class LiveQuickBooksGateway : IQuickBooksGateway
             "QuickBooks reported success but returned no CustomerRet.", status);
     }
 
+    public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct)
+    {
+        var requestXml = ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null);
+        var (status, items) = Run("ItemQuery", requestXml, ItemMapper.ParseQueryResponse);
+        ThrowIfError(status);
+        return items;
+    }
+
+    public ItemDto? GetItem(string listId, CancellationToken ct)
+    {
+        var requestXml = ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince: null, listId);
+        var (status, items) = Run("ItemQuery", requestXml, ItemMapper.ParseQueryResponse);
+
+        if (status.IsNoMatchingRecords)
+        {
+            return null;
+        }
+
+        ThrowIfError(status);
+        return items.FirstOrDefault(i => i.ListId == listId);
+    }
+
+    public ItemDto AddItem(CreateItemRequest request, CancellationToken ct)
+    {
+        var requestXml = ItemMapper.BuildAddRequest(_options.QbXmlVersion, request);
+        var (status, item) = Run("ItemAdd", requestXml, xml => ItemMapper.ParseAddResponse(xml, request.Type));
+        ThrowIfError(status);
+
+        return item ?? throw new QbAgentException(QbErrorCode.Internal, 500,
+            "QuickBooks reported success but returned no item.", status);
+    }
+
     /// <summary>
     /// Open a session, submit the request, parse the response — auditing the exact qbXML exchange
     /// exactly once (in <c>finally</c>) whether it succeeds, fails, or throws. The caller decides how

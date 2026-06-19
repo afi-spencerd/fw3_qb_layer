@@ -53,6 +53,10 @@ builder.Services
 
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
 
+// Serialize enums as their names (e.g. "Inventory") in requests/responses and the OpenAPI document.
+builder.Services.ConfigureHttpJsonOptions(o =>
+    o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
 // Gateway choice depends only on Mode, so it is safe to read configuration directly here.
 var qbOptions = builder.Configuration.GetSection(QbAgentOptions.SectionName).Get<QbAgentOptions>() ?? new QbAgentOptions();
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
@@ -116,6 +120,7 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/openapi.json", "FormulaWeb QuickBooks 
 
 app.MapHealthEndpoints();
 app.MapCustomerEndpoints();
+app.MapItemEndpoints();
 
 app.Run();
 

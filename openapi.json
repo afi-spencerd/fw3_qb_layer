@@ -165,6 +165,140 @@
           }
         }
       }
+    },
+    "/items": {
+      "get": {
+        "tags": [
+          "Items"
+        ],
+        "summary": "List items (all types), optionally only those modified at or after 'updatedSince'.",
+        "operationId": "ListItems",
+        "parameters": [
+          {
+            "name": "updatedSince",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "summary": "Create an item in QuickBooks. Requires an Idempotency-Key header; replays are safe.",
+        "operationId": "CreateItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{listId}": {
+      "get": {
+        "tags": [
+          "Items"
+        ],
+        "summary": "Fetch a single item by its QuickBooks ListID.",
+        "operationId": "GetItem",
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -212,6 +346,105 @@
             "type": [
               "null",
               "string"
+            ]
+          }
+        }
+      },
+      "CreateItemRequest": {
+        "required": [
+          "type",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ItemType"
+          },
+          "name": {
+            "maxLength": 31,
+            "type": "string"
+          },
+          "parentFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "manufacturerPartNumber": {
+            "maxLength": 31,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purchaseDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "purchaseCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "incomeAccountFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cogsOrExpenseAccountFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "assetAccountFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reorderPoint": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "openingBalance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ItemOpeningBalance"
+              }
             ]
           }
         }
@@ -335,6 +568,175 @@
           }
         }
       },
+      "ItemDto": {
+        "required": [
+          "listId",
+          "editSequence",
+          "type",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "listId": {
+            "type": "string"
+          },
+          "editSequence": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "parentFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "manufacturerPartNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purchaseDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "purchaseCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "incomeAccountFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cogsOrExpenseAccountFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "assetAccountFullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantityOnHand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "averageCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reorderPoint": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "timeCreated": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "timeModified": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ItemOpeningBalance": {
+        "required": [
+          "quantityOnHand",
+          "totalValue",
+          "asOf"
+        ],
+        "type": "object",
+        "properties": {
+          "quantityOnHand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ItemType": {
+        "enum": [
+          "Inventory",
+          "NonInventory"
+        ]
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -389,6 +791,9 @@
     },
     {
       "name": "Customers"
+    },
+    {
+      "name": "Items"
     }
   ]
 }

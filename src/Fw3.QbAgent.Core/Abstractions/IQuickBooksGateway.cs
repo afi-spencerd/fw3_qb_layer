@@ -24,4 +24,13 @@ public interface IQuickBooksGateway
 
     /// <summary>Create a customer in QuickBooks and return it including its new ListID and EditSequence.</summary>
     CustomerDto AddCustomer(CreateCustomerRequest request, CancellationToken ct);
+
+    /// <summary>Query items, optionally only those modified at/after <paramref name="updatedSince"/>. Returns all item types.</summary>
+    IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct);
+
+    /// <summary>Fetch a single item by its QuickBooks ListID, or null if not found.</summary>
+    ItemDto? GetItem(string listId, CancellationToken ct);
+
+    /// <summary>Create an item in QuickBooks and return it including its new ListID and EditSequence.</summary>
+    ItemDto AddItem(CreateItemRequest request, CancellationToken ct);
 }

@@ -85,6 +85,47 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
             "Fixture CustomerAdd produced no CustomerRet.");
     }
 
+    public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct)
+    {
+        var request = ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null);
+        var responseXml = LoadFixture("ItemQueryRs.xml");
+        _audit.Record("ItemQuery", request, responseXml, null);
+
+        var (status, items) = ItemMapper.ParseQueryResponse(responseXml);
+        ThrowIfError(status);
+
+        if (updatedSince is { } since)
+        {
+            items = items.Where(i => i.TimeModified is null || i.TimeModified >= since).ToList();
+        }
+
+        return items;
+    }
+
+    public ItemDto? GetItem(string listId, CancellationToken ct)
+    {
+        var request = ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince: null, listId);
+        var responseXml = LoadFixture("ItemQueryRs.xml");
+        _audit.Record("ItemQuery", request, responseXml, null);
+
+        var (status, items) = ItemMapper.ParseQueryResponse(responseXml);
+        ThrowIfError(status);
+
+        return items.FirstOrDefault(i => i.ListId == listId);
+    }
+
+    public ItemDto AddItem(CreateItemRequest request, CancellationToken ct)
+    {
+        var requestXml = ItemMapper.BuildAddRequest(_options.QbXmlVersion, request);
+        var responseXml = SynthesizeItemAddResponse(request);
+        _audit.Record("ItemAdd", requestXml, responseXml, null);
+
+        var (status, item) = ItemMapper.ParseAddResponse(responseXml, request.Type);
+        ThrowIfError(status);
+
+        return item ?? throw new QbAgentException(QbErrorCode.Internal, 500, "Fixture ItemAdd produced no item.");
+    }
+
     private static void ThrowIfError(QbStatus status)
     {
         if (status.IsError)
@@ -159,4 +200,98 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
             parent.Add(new XElement(name, value));
         }
     }
+
+    private string SynthesizeItemAddResponse(CreateItemRequest request)
+    {
+        var now = DateTimeOffset.Now;
+        var listId = SynthesizeListId(request.Name);
+        var fullName = string.IsNullOrWhiteSpace(request.ParentFullName)
+            ? request.Name
+            : $"{request.ParentFullName}:{request.Name}";
+
+        var (rsElement, ret) = request.Type == ItemType.Inventory
+            ? ("ItemInventoryAddRs", BuildInventoryRet(request, listId, fullName, now))
+            : ("ItemNonInventoryAddRs", BuildNonInventoryRet(request, listId, fullName, now));
+
+        var doc = new XDocument(
+            new XProcessingInstruction("qbxml", $"version=\"{_options.QbXmlVersion}\""),
+            new XElement("QBXML",
+                new XElement("QBXMLMsgsRs",
+                    new XElement(rsElement,
+                        new XAttribute("requestID", "1"),
+                        new XAttribute("statusCode", "0"),
+                        new XAttribute("statusSeverity", "Info"),
+                        new XAttribute("statusMessage", "Status OK"),
+                        ret))));
+
+        return "<?xml version=\"1.0\" encoding=\"utf-8\"?>" + Environment.NewLine + doc;
+    }
+
+    private static XElement BuildInventoryRet(CreateItemRequest r, string listId, string fullName, DateTimeOffset now)
+    {
+        var ret = NewRetHeader("ItemInventoryRet", r, listId, fullName, now);
+        AddIfPresent(ret, "SalesDesc", r.SalesDescription);
+        AddDecimal(ret, "SalesPrice", r.SalesPrice);
+        ret.Add(AccountRefEl("IncomeAccountRef", r.IncomeAccountFullName));
+        AddIfPresent(ret, "PurchaseDesc", r.PurchaseDescription);
+        AddDecimal(ret, "PurchaseCost", r.PurchaseCost);
+        ret.Add(AccountRefEl("COGSAccountRef", r.CogsOrExpenseAccountFullName));
+        ret.Add(AccountRefEl("AssetAccountRef", r.AssetAccountFullName));
+        ret.Add(new XElement("QuantityOnHand", (r.OpeningBalance?.QuantityOnHand ?? 0m).ToString(CultureInfo.InvariantCulture)));
+        return ret;
+    }
+
+    private static XElement BuildNonInventoryRet(CreateItemRequest r, string listId, string fullName, DateTimeOffset now)
+    {
+        var ret = NewRetHeader("ItemNonInventoryRet", r, listId, fullName, now);
+        var hasIncome = !string.IsNullOrWhiteSpace(r.IncomeAccountFullName);
+        var hasExpense = !string.IsNullOrWhiteSpace(r.CogsOrExpenseAccountFullName);
+
+        if (hasIncome && hasExpense)
+        {
+            var sp = new XElement("SalesAndPurchase");
+            AddIfPresent(sp, "SalesDesc", r.SalesDescription);
+            AddDecimal(sp, "SalesPrice", r.SalesPrice);
+            sp.Add(AccountRefEl("IncomeAccountRef", r.IncomeAccountFullName));
+            AddIfPresent(sp, "PurchaseDesc", r.PurchaseDescription);
+            AddDecimal(sp, "PurchaseCost", r.PurchaseCost);
+            sp.Add(AccountRefEl("ExpenseAccountRef", r.CogsOrExpenseAccountFullName));
+            ret.Add(sp);
+        }
+        else
+        {
+            var sop = new XElement("SalesOrPurchase");
+            AddIfPresent(sop, "Desc", hasIncome ? r.SalesDescription : r.PurchaseDescription);
+            AddDecimal(sop, "Price", hasIncome ? r.SalesPrice : r.PurchaseCost);
+            sop.Add(AccountRefEl("AccountRef", hasIncome ? r.IncomeAccountFullName : r.CogsOrExpenseAccountFullName));
+            ret.Add(sop);
+        }
+
+        return ret;
+    }
+
+    private static XElement NewRetHeader(string retName, CreateItemRequest r, string listId, string fullName, DateTimeOffset now)
+    {
+        var ret = new XElement(retName,
+            new XElement("ListID", listId),
+            new XElement("TimeCreated", now.ToString("yyyy-MM-ddTHH:mm:ssK", CultureInfo.InvariantCulture)),
+            new XElement("TimeModified", now.ToString("yyyy-MM-ddTHH:mm:ssK", CultureInfo.InvariantCulture)),
+            new XElement("EditSequence", "1"),
+            new XElement("Name", r.Name),
+            new XElement("FullName", fullName),
+            new XElement("IsActive", r.IsActive ? "true" : "false"));
+        AddIfPresent(ret, "ManufacturerPartNumber", r.ManufacturerPartNumber);
+        return ret;
+    }
+
+    private static void AddDecimal(XElement parent, string name, decimal? value)
+    {
+        if (value is { } v)
+        {
+            parent.Add(new XElement(name, v.ToString(CultureInfo.InvariantCulture)));
+        }
+    }
+
+    private static XElement AccountRefEl(string name, string? fullName) =>
+        new(name, new XElement("FullName", fullName ?? ""));
 }

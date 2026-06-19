@@ -84,6 +84,9 @@ public class QbQueueWorkerTests
         public QbHealth CheckHealth(CancellationToken ct) => new() { QbReachable = true, CompanyFileOpen = true };
         public CustomerDto? GetCustomer(string listId, CancellationToken ct) => null;
         public CustomerDto AddCustomer(CreateCustomerRequest request, CancellationToken ct) => throw new NotSupportedException();
+        public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public ItemDto? GetItem(string listId, CancellationToken ct) => null;
+        public ItemDto AddItem(CreateItemRequest request, CancellationToken ct) => throw new NotSupportedException();
     }
 
     private sealed class ThrowingGateway : IQuickBooksGateway
@@ -92,5 +95,8 @@ public class QbQueueWorkerTests
         public QbHealth CheckHealth(CancellationToken ct) => new() { QbReachable = true, CompanyFileOpen = true };
         public CustomerDto? GetCustomer(string listId, CancellationToken ct) => null;
         public CustomerDto AddCustomer(CreateCustomerRequest request, CancellationToken ct) => throw new NotSupportedException();
+        public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public ItemDto? GetItem(string listId, CancellationToken ct) => null;
+        public ItemDto AddItem(CreateItemRequest request, CancellationToken ct) => throw new NotSupportedException();
     }
 }

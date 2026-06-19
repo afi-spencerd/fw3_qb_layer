@@ -38,6 +38,9 @@ because the QuickBooks SDK is apartment-threaded COM and does not tolerate concu
 | GET    | `/customers?updatedSince={iso}`    | List customers (optional modified-date filter)       |
 | GET    | `/customers/{listId}`              | One customer, or `404`                               |
 | POST   | `/customers`                       | Create a customer; **requires `Idempotency-Key` header**; returns `201` with `listId` + `editSequence` |
+| GET    | `/items?updatedSince={iso}`        | List items of all types (inventory, non-inventory, …)|
+| GET    | `/items/{listId}`                  | One item, or `404`                                   |
+| POST   | `/items`                           | Create an item (`Inventory` or `NonInventory`); **requires `Idempotency-Key`**; returns `201` with `listId` + `editSequence` |
 | GET    | `/openapi.json`                    | The OpenAPI contract (source of truth for the ERP client) |
 | —      | `/swagger`                         | Swagger UI for browsing endpoints/params             |
 
