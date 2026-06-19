@@ -44,4 +44,51 @@ public static class QbXml
         var value = element.Element(name)?.Value;
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
+
+    /// <summary>
+    /// Apply a qbXML iterator to a query request element. Iterators let a large result set be fetched
+    /// in chunks; they are valid only within a single QuickBooks session, so the whole drain must happen
+    /// inside one open session.
+    /// </summary>
+    public static void ApplyIterator(XElement requestElement, IteratorMode mode, string? iteratorId)
+    {
+        switch (mode)
+        {
+            case IteratorMode.Start:
+                requestElement.SetAttributeValue("iterator", "Start");
+                break;
+            case IteratorMode.Continue:
+                requestElement.SetAttributeValue("iterator", "Continue");
+                if (!string.IsNullOrEmpty(iteratorId))
+                {
+                    requestElement.SetAttributeValue("iteratorID", iteratorId);
+                }
+
+                break;
+            case IteratorMode.None:
+            default:
+                break;
+        }
+    }
+
+    /// <summary>Read the iterator id and remaining-count QuickBooks puts on a query response element.</summary>
+    public static (string? IteratorId, int RemainingCount) ReadIterator(XElement responseElement)
+    {
+        var id = responseElement.Attribute("iteratorID")?.Value;
+        var remaining = int.TryParse(responseElement.Attribute("iteratorRemainingCount")?.Value, out var r) ? r : 0;
+        return (id, remaining);
+    }
+}
+
+/// <summary>qbXML query iterator state for a single drain.</summary>
+public enum IteratorMode
+{
+    /// <summary>No iterator (a one-shot query, optionally capped by MaxReturned).</summary>
+    None,
+
+    /// <summary>Begin a new iterated query.</summary>
+    Start,
+
+    /// <summary>Continue an iterated query using a prior iteratorID.</summary>
+    Continue,
 }

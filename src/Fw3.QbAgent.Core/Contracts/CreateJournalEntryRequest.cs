@@ -13,8 +13,9 @@ public sealed record CreateJournalEntryRequest
     [Required]
     public required DateOnly TxnDate { get; init; }
 
-    /// <summary>Reference number — typically the ERP's posting/batch id, useful for reconciliation.</summary>
-    [MaxLength(20)]
+    /// <summary>Reference number — typically the ERP's posting/batch id, useful for reconciliation.
+    /// QuickBooks caps a journal entry's RefNumber at 11 characters.</summary>
+    [MaxLength(11)]
     public string? RefNumber { get; init; }
 
     /// <summary>Flag the entry as an adjustment (e.g. for period-end inventory/COGS adjustments).</summary>

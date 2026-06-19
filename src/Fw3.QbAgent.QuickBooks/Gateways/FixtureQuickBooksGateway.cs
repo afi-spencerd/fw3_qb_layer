@@ -40,9 +40,9 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
         Detail = "Fixture mode: responses are simulated; no live QuickBooks is contacted.",
     };
 
-    public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, CancellationToken ct)
+    public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct)
     {
-        var request = CustomerMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null);
+        var request = CustomerMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null, maxReturned);
         var responseXml = LoadFixture("CustomerQueryRs.xml");
         _audit.Record("CustomerQuery", request, responseXml, null);
 
@@ -55,7 +55,7 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
             customers = customers.Where(c => c.TimeModified is null || c.TimeModified >= since).ToList();
         }
 
-        return customers;
+        return Cap(customers, maxReturned);
     }
 
     public CustomerDto? GetCustomer(string listId, CancellationToken ct)
@@ -85,9 +85,9 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
             "Fixture CustomerAdd produced no CustomerRet.");
     }
 
-    public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct)
+    public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct)
     {
-        var request = ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null);
+        var request = ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null, maxReturned);
         var responseXml = LoadFixture("ItemQueryRs.xml");
         _audit.Record("ItemQuery", request, responseXml, null);
 
@@ -99,7 +99,7 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
             items = items.Where(i => i.TimeModified is null || i.TimeModified >= since).ToList();
         }
 
-        return items;
+        return Cap(items, maxReturned);
     }
 
     public ItemDto? GetItem(string listId, CancellationToken ct)
@@ -126,9 +126,9 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
         return item ?? throw new QbAgentException(QbErrorCode.Internal, 500, "Fixture ItemAdd produced no item.");
     }
 
-    public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct)
+    public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct)
     {
-        var request = JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, txnId: null);
+        var request = JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, txnId: null, maxReturned);
         var responseXml = LoadFixture("JournalEntryQueryRs.xml");
         _audit.Record("JournalEntryQuery", request, responseXml, null);
 
@@ -140,7 +140,7 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
             entries = entries.Where(e => e.TimeModified is null || e.TimeModified >= since).ToList();
         }
 
-        return entries;
+        return Cap(entries, maxReturned);
     }
 
     public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct)
@@ -174,6 +174,9 @@ public sealed class FixtureQuickBooksGateway : IQuickBooksGateway
             throw QbAgentException.QbRequestFailed(status);
         }
     }
+
+    private static IReadOnlyList<T> Cap<T>(IReadOnlyList<T> list, int? maxReturned) =>
+        maxReturned is { } max && list.Count > max ? list.Take(max).ToList() : list;
 
     private string LoadFixture(string fileName)
     {

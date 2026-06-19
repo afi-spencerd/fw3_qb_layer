@@ -62,13 +62,10 @@ public sealed class LiveQuickBooksGateway : IQuickBooksGateway
         }
     }
 
-    public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, CancellationToken ct)
-    {
-        var requestXml = CustomerMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null);
-        var (status, customers) = Run("CustomerQuery", requestXml, CustomerMapper.ParseQueryResponse);
-        ThrowIfError(status);
-        return customers;
-    }
+    public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) =>
+        RunQuery("CustomerQuery", maxReturned, CustomerMapper.QueryResponseElement,
+            (mode, iteratorId, max) => CustomerMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, null, max, mode, iteratorId),
+            CustomerMapper.ParseQueryResponse);
 
     public CustomerDto? GetCustomer(string listId, CancellationToken ct)
     {
@@ -95,13 +92,10 @@ public sealed class LiveQuickBooksGateway : IQuickBooksGateway
             "QuickBooks reported success but returned no CustomerRet.", status);
     }
 
-    public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct)
-    {
-        var requestXml = ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, listId: null);
-        var (status, items) = Run("ItemQuery", requestXml, ItemMapper.ParseQueryResponse);
-        ThrowIfError(status);
-        return items;
-    }
+    public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) =>
+        RunQuery("ItemQuery", maxReturned, ItemMapper.QueryResponseElement,
+            (mode, iteratorId, max) => ItemMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, null, max, mode, iteratorId),
+            ItemMapper.ParseQueryResponse);
 
     public ItemDto? GetItem(string listId, CancellationToken ct)
     {
@@ -127,13 +121,10 @@ public sealed class LiveQuickBooksGateway : IQuickBooksGateway
             "QuickBooks reported success but returned no item.", status);
     }
 
-    public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct)
-    {
-        var requestXml = JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, txnId: null);
-        var (status, entries) = Run("JournalEntryQuery", requestXml, JournalEntryMapper.ParseQueryResponse);
-        ThrowIfError(status);
-        return entries;
-    }
+    public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) =>
+        RunQuery("JournalEntryQuery", maxReturned, JournalEntryMapper.QueryResponseElement,
+            (mode, iteratorId, max) => JournalEntryMapper.BuildQueryRequest(_options.QbXmlVersion, updatedSince, null, max, mode, iteratorId),
+            JournalEntryMapper.ParseQueryResponse);
 
     public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct)
     {
@@ -188,6 +179,70 @@ public sealed class LiveQuickBooksGateway : IQuickBooksGateway
         {
             _audit.Record(operation, requestXml, responseXml, status, error);
         }
+    }
+
+    /// <summary>
+    /// Run a list query. With a <paramref name="maxReturned"/> cap it is a single bounded request; without
+    /// one it drains the entire result set via a qbXML iterator in fixed-size chunks, all within ONE
+    /// session (iterators are session-scoped). Each chunk is audited.
+    /// </summary>
+    private IReadOnlyList<T> RunQuery<T>(
+        string operation,
+        int? maxReturned,
+        string responseElementName,
+        Func<IteratorMode, string?, int?, string> buildRequest,
+        Func<string, (QbStatus Status, IReadOnlyList<T> Items)> parse)
+    {
+        if (maxReturned is { } cap)
+        {
+            var (status, items) = Run(operation, buildRequest(IteratorMode.None, null, cap), parse);
+            ThrowIfError(status);
+            return items;
+        }
+
+        const int chunkSize = 1000;
+        var all = new List<T>();
+
+        using var conn = _connections.Create();
+        conn.Open();
+
+        string? iteratorId = null;
+        var mode = IteratorMode.Start;
+        while (true)
+        {
+            var requestXml = buildRequest(mode, iteratorId, chunkSize);
+            string? responseXml = null;
+            QbStatus? status = null;
+            try
+            {
+                responseXml = conn.ProcessRequest(requestXml);
+                var (parsedStatus, items) = parse(responseXml);
+                status = parsedStatus;
+                if (parsedStatus.IsError)
+                {
+                    throw QbAgentException.QbRequestFailed(parsedStatus);
+                }
+
+                all.AddRange(items);
+                var (id, remaining) = QbXml.ReadIterator(QbXml.GetResponseElement(responseXml, responseElementName));
+                _audit.Record(operation, requestXml, responseXml, status);
+
+                if (remaining <= 0 || string.IsNullOrEmpty(id))
+                {
+                    break;
+                }
+
+                iteratorId = id;
+                mode = IteratorMode.Continue;
+            }
+            catch (Exception ex)
+            {
+                _audit.Record(operation, requestXml, responseXml, status, ex);
+                throw;
+            }
+        }
+
+        return all;
     }
 
     private static void ThrowIfError(QbStatus status)

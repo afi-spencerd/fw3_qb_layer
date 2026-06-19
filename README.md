@@ -49,6 +49,11 @@ because the QuickBooks SDK is apartment-threaded COM and does not tolerate concu
 
 `/health`, `/openapi.json`, and `/swagger` are exempt from auth; everything else requires the API key.
 
+**List endpoints** (`/customers`, `/items`, `/journal-entries`) accept `?maxReturned=N` to cap results.
+With no cap, the agent fetches the full set safely via a qbXML iterator in chunks within one session
+(so QuickBooks never builds one giant response). For routine syncs, prefer `?updatedSince={iso}` to
+pull only deltas — a real company file can hold tens of thousands of items.
+
 ## Versions / platform (verified June 2026)
 
 - **.NET 10 (LTS)** — `net10.0-windows`, built **x64** (the SDK COM is 64-bit since QB 2022).

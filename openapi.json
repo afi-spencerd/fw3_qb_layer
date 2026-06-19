@@ -37,7 +37,7 @@
         "tags": [
           "Customers"
         ],
-        "summary": "List customers, optionally only those modified at or after 'updatedSince'.",
+        "summary": "List customers, optionally only those modified at or after 'updatedSince'. 'maxReturned' caps the result; omit it to fetch all.",
         "operationId": "ListCustomers",
         "parameters": [
           {
@@ -46,6 +46,18 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          },
+          {
+            "name": "maxReturned",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
             }
           }
         ],
@@ -171,7 +183,7 @@
         "tags": [
           "Items"
         ],
-        "summary": "List items (all types), optionally only those modified at or after 'updatedSince'.",
+        "summary": "List items (all types), optionally only those modified at or after 'updatedSince'. 'maxReturned' caps the result; omit it to fetch all.",
         "operationId": "ListItems",
         "parameters": [
           {
@@ -180,6 +192,18 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          },
+          {
+            "name": "maxReturned",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
             }
           }
         ],
@@ -305,7 +329,7 @@
         "tags": [
           "JournalEntries"
         ],
-        "summary": "List journal entries, optionally only those modified at or after 'updatedSince'.",
+        "summary": "List journal entries, optionally only those modified at or after 'updatedSince'. 'maxReturned' caps the result; omit it to fetch all.",
         "operationId": "ListJournalEntries",
         "parameters": [
           {
@@ -314,6 +338,18 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          },
+          {
+            "name": "maxReturned",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
             }
           }
         ],
@@ -595,7 +631,7 @@
             "format": "date"
           },
           "refNumber": {
-            "maxLength": 20,
+            "maxLength": 11,
             "type": [
               "null",
               "string"

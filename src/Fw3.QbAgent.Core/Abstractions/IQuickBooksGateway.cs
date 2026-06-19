@@ -16,8 +16,11 @@ public interface IQuickBooksGateway
     /// <summary>Probe QuickBooks reachability and company-file visibility. Never throws for "not reachable" — reports it.</summary>
     QbHealth CheckHealth(CancellationToken ct);
 
-    /// <summary>Query customers, optionally only those modified at/after <paramref name="updatedSince"/>.</summary>
-    IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, CancellationToken ct);
+    /// <summary>
+    /// Query customers, optionally only those modified at/after <paramref name="updatedSince"/>.
+    /// <paramref name="maxReturned"/> caps the result; when null, the full set is fetched in chunks.
+    /// </summary>
+    IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct);
 
     /// <summary>Fetch a single customer by its QuickBooks ListID, or null if not found.</summary>
     CustomerDto? GetCustomer(string listId, CancellationToken ct);
@@ -25,8 +28,9 @@ public interface IQuickBooksGateway
     /// <summary>Create a customer in QuickBooks and return it including its new ListID and EditSequence.</summary>
     CustomerDto AddCustomer(CreateCustomerRequest request, CancellationToken ct);
 
-    /// <summary>Query items, optionally only those modified at/after <paramref name="updatedSince"/>. Returns all item types.</summary>
-    IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct);
+    /// <summary>Query items (all types), optionally only those modified at/after <paramref name="updatedSince"/>.
+    /// <paramref name="maxReturned"/> caps the result; when null, the full set is fetched in chunks.</summary>
+    IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct);
 
     /// <summary>Fetch a single item by its QuickBooks ListID, or null if not found.</summary>
     ItemDto? GetItem(string listId, CancellationToken ct);
@@ -34,8 +38,9 @@ public interface IQuickBooksGateway
     /// <summary>Create an item in QuickBooks and return it including its new ListID and EditSequence.</summary>
     ItemDto AddItem(CreateItemRequest request, CancellationToken ct);
 
-    /// <summary>Query journal entries, optionally only those modified at/after <paramref name="updatedSince"/>.</summary>
-    IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct);
+    /// <summary>Query journal entries, optionally only those modified at/after <paramref name="updatedSince"/>.
+    /// <paramref name="maxReturned"/> caps the result; when null, the full set is fetched in chunks.</summary>
+    IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct);
 
     /// <summary>Fetch a single journal entry by its QuickBooks TxnID, or null if not found.</summary>
     JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct);

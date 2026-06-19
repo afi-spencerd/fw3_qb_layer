@@ -87,6 +87,32 @@ public class ItemMapperTests
     }
 
     [Fact]
+    public void BuildQueryRequest_with_iterator_sets_attribute_and_maxReturned_before_filters()
+    {
+        var xml = ItemMapper.BuildQueryRequest(Version, updatedSince: null, listId: null,
+            maxReturned: 500, iterator: IteratorMode.Start, iteratorId: null);
+        var rq = XDocument.Parse(xml).Descendants("ItemQueryRq").Single();
+
+        Assert.Equal("Start", rq.Attribute("iterator")!.Value);
+        Assert.Equal("500", rq.Element("MaxReturned")!.Value);
+
+        // qbXML schema: MaxReturned must precede ActiveStatus.
+        var names = rq.Elements().Select(e => e.Name.LocalName).ToList();
+        Assert.True(names.IndexOf("MaxReturned") < names.IndexOf("ActiveStatus"));
+    }
+
+    [Fact]
+    public void BuildQueryRequest_continue_carries_iteratorId()
+    {
+        var xml = ItemMapper.BuildQueryRequest(Version, updatedSince: null, listId: null,
+            maxReturned: 500, iterator: IteratorMode.Continue, iteratorId: "{abc-123}");
+        var rq = XDocument.Parse(xml).Descendants("ItemQueryRq").Single();
+
+        Assert.Equal("Continue", rq.Attribute("iterator")!.Value);
+        Assert.Equal("{abc-123}", rq.Attribute("iteratorID")!.Value);
+    }
+
+    [Fact]
     public void ParseQueryResponse_reads_mixed_item_types_from_fixture()
     {
         var xml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "fixtures", "ItemQueryRs.xml"));

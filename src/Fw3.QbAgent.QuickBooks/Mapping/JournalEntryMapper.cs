@@ -19,7 +19,8 @@ public static class JournalEntryMapper
 
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
-    public static string BuildQueryRequest(string qbXmlVersion, DateTimeOffset? updatedSince, string? txnId)
+    public static string BuildQueryRequest(string qbXmlVersion, DateTimeOffset? updatedSince, string? txnId,
+        int? maxReturned = null, IteratorMode iterator = IteratorMode.None, string? iteratorId = null)
     {
         var rq = new XElement("JournalEntryQueryRq", new XAttribute("requestID", "1"));
 
@@ -27,10 +28,19 @@ public static class JournalEntryMapper
         {
             rq.Add(new XElement("TxnID", txnId));
         }
-        else if (updatedSince is { } since)
+        else
         {
-            rq.Add(new XElement("ModifiedDateRangeFilter",
-                new XElement("FromModifiedDate", since.ToString("yyyy-MM-ddTHH:mm:ssK", Inv))));
+            QbXml.ApplyIterator(rq, iterator, iteratorId);
+            if (maxReturned is { } max)
+            {
+                rq.Add(new XElement("MaxReturned", max.ToString(Inv)));
+            }
+
+            if (updatedSince is { } since)
+            {
+                rq.Add(new XElement("ModifiedDateRangeFilter",
+                    new XElement("FromModifiedDate", since.ToString("yyyy-MM-ddTHH:mm:ssK", Inv))));
+            }
         }
 
         // Without this, QuickBooks returns the entry header but no debit/credit lines.

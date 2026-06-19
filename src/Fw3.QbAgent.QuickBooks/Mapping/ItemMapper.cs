@@ -18,7 +18,8 @@ public static class ItemMapper
 
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
-    public static string BuildQueryRequest(string qbXmlVersion, DateTimeOffset? updatedSince, string? listId)
+    public static string BuildQueryRequest(string qbXmlVersion, DateTimeOffset? updatedSince, string? listId,
+        int? maxReturned = null, IteratorMode iterator = IteratorMode.None, string? iteratorId = null)
     {
         var rq = new XElement("ItemQueryRq", new XAttribute("requestID", "1"));
 
@@ -28,6 +29,12 @@ public static class ItemMapper
         }
         else
         {
+            QbXml.ApplyIterator(rq, iterator, iteratorId);
+            if (maxReturned is { } max)
+            {
+                rq.Add(new XElement("MaxReturned", max.ToString(Inv)));
+            }
+
             rq.Add(new XElement("ActiveStatus", "All"));
             if (updatedSince is { } since)
             {

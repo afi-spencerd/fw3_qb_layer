@@ -14,13 +14,13 @@ public static class JournalEntryEndpoints
     {
         var group = app.MapGroup("/journal-entries").WithTags("JournalEntries");
 
-        group.MapGet("/", async (DateTimeOffset? updatedSince, IQbRequestQueue queue, CancellationToken ct) =>
+        group.MapGet("/", async (DateTimeOffset? updatedSince, int? maxReturned, IQbRequestQueue queue, CancellationToken ct) =>
         {
-            var entries = await queue.EnqueueAsync("JournalEntryQuery", gw => gw.QueryJournalEntries(updatedSince, ct), ct);
+            var entries = await queue.EnqueueAsync("JournalEntryQuery", gw => gw.QueryJournalEntries(updatedSince, maxReturned, ct), ct);
             return Results.Ok(entries);
         })
         .WithName("ListJournalEntries")
-        .WithSummary("List journal entries, optionally only those modified at or after 'updatedSince'.")
+        .WithSummary("List journal entries, optionally only those modified at or after 'updatedSince'. 'maxReturned' caps the result; omit it to fetch all.")
         .Produces<IReadOnlyList<JournalEntryDto>>();
 
         group.MapGet("/{txnId}", async (string txnId, IQbRequestQueue queue, CancellationToken ct) =>

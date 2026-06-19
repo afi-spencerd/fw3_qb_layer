@@ -19,7 +19,7 @@ public class QbQueueWorkerTests
         {
             // Fire many requests at once; the queue must funnel them through one at a time.
             var calls = Enumerable.Range(0, 25)
-                .Select(_ => queue.EnqueueAsync("CustomerQuery", gw => gw.QueryCustomers(null, CancellationToken.None), CancellationToken.None))
+                .Select(_ => queue.EnqueueAsync("CustomerQuery", gw => gw.QueryCustomers(null, null, CancellationToken.None), CancellationToken.None))
                 .ToArray();
 
             await Task.WhenAll(calls);
@@ -45,7 +45,7 @@ public class QbQueueWorkerTests
         try
         {
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                queue.EnqueueAsync("CustomerQuery", gw => gw.QueryCustomers(null, CancellationToken.None), CancellationToken.None));
+                queue.EnqueueAsync("CustomerQuery", gw => gw.QueryCustomers(null, null, CancellationToken.None), CancellationToken.None));
             Assert.Equal("boom", ex.Message);
         }
         finally
@@ -62,7 +62,7 @@ public class QbQueueWorkerTests
         public bool WasAlwaysSta = true;
         public readonly HashSet<int> ThreadIds = new();
 
-        public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, CancellationToken ct)
+        public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct)
         {
             var now = Interlocked.Increment(ref _current);
             lock (ThreadIds)
@@ -84,24 +84,24 @@ public class QbQueueWorkerTests
         public QbHealth CheckHealth(CancellationToken ct) => new() { QbReachable = true, CompanyFileOpen = true };
         public CustomerDto? GetCustomer(string listId, CancellationToken ct) => null;
         public CustomerDto AddCustomer(CreateCustomerRequest request, CancellationToken ct) => throw new NotSupportedException();
-        public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) => [];
         public ItemDto? GetItem(string listId, CancellationToken ct) => null;
         public ItemDto AddItem(CreateItemRequest request, CancellationToken ct) => throw new NotSupportedException();
-        public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) => [];
         public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct) => null;
         public JournalEntryDto AddJournalEntry(CreateJournalEntryRequest request, CancellationToken ct) => throw new NotSupportedException();
     }
 
     private sealed class ThrowingGateway : IQuickBooksGateway
     {
-        public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, CancellationToken ct) => throw new InvalidOperationException("boom");
+        public IReadOnlyList<CustomerDto> QueryCustomers(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) => throw new InvalidOperationException("boom");
         public QbHealth CheckHealth(CancellationToken ct) => new() { QbReachable = true, CompanyFileOpen = true };
         public CustomerDto? GetCustomer(string listId, CancellationToken ct) => null;
         public CustomerDto AddCustomer(CreateCustomerRequest request, CancellationToken ct) => throw new NotSupportedException();
-        public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public IReadOnlyList<ItemDto> QueryItems(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) => [];
         public ItemDto? GetItem(string listId, CancellationToken ct) => null;
         public ItemDto AddItem(CreateItemRequest request, CancellationToken ct) => throw new NotSupportedException();
-        public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, CancellationToken ct) => [];
+        public IReadOnlyList<JournalEntryDto> QueryJournalEntries(DateTimeOffset? updatedSince, int? maxReturned, CancellationToken ct) => [];
         public JournalEntryDto? GetJournalEntry(string txnId, CancellationToken ct) => null;
         public JournalEntryDto AddJournalEntry(CreateJournalEntryRequest request, CancellationToken ct) => throw new NotSupportedException();
     }

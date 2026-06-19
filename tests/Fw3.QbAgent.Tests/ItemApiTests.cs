@@ -31,6 +31,15 @@ public class ItemApiTests : IClassFixture<AgentApiFactory>
     }
 
     [Fact]
+    public async Task ListItems_respects_maxReturned_cap()
+    {
+        var items = await Authed().GetFromJsonAsync<List<ItemDto>>("/items?maxReturned=2");
+
+        Assert.NotNull(items);
+        Assert.True(items!.Count <= 2);
+    }
+
+    [Fact]
     public async Task GetItem_returns_inventory_item_with_accounts()
     {
         var item = await Authed().GetFromJsonAsync<ItemDto>("/items/80000102-1500000102");

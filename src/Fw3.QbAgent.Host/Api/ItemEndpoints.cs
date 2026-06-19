@@ -14,13 +14,13 @@ public static class ItemEndpoints
     {
         var group = app.MapGroup("/items").WithTags("Items");
 
-        group.MapGet("/", async (DateTimeOffset? updatedSince, IQbRequestQueue queue, CancellationToken ct) =>
+        group.MapGet("/", async (DateTimeOffset? updatedSince, int? maxReturned, IQbRequestQueue queue, CancellationToken ct) =>
         {
-            var items = await queue.EnqueueAsync("ItemQuery", gw => gw.QueryItems(updatedSince, ct), ct);
+            var items = await queue.EnqueueAsync("ItemQuery", gw => gw.QueryItems(updatedSince, maxReturned, ct), ct);
             return Results.Ok(items);
         })
         .WithName("ListItems")
-        .WithSummary("List items (all types), optionally only those modified at or after 'updatedSince'.")
+        .WithSummary("List items (all types), optionally only those modified at or after 'updatedSince'. 'maxReturned' caps the result; omit it to fetch all.")
         .Produces<IReadOnlyList<ItemDto>>();
 
         group.MapGet("/{listId}", async (string listId, IQbRequestQueue queue, CancellationToken ct) =>

@@ -14,13 +14,13 @@ public static class CustomerEndpoints
     {
         var group = app.MapGroup("/customers").WithTags("Customers");
 
-        group.MapGet("/", async (DateTimeOffset? updatedSince, IQbRequestQueue queue, CancellationToken ct) =>
+        group.MapGet("/", async (DateTimeOffset? updatedSince, int? maxReturned, IQbRequestQueue queue, CancellationToken ct) =>
         {
-            var customers = await queue.EnqueueAsync("CustomerQuery", gw => gw.QueryCustomers(updatedSince, ct), ct);
+            var customers = await queue.EnqueueAsync("CustomerQuery", gw => gw.QueryCustomers(updatedSince, maxReturned, ct), ct);
             return Results.Ok(customers);
         })
         .WithName("ListCustomers")
-        .WithSummary("List customers, optionally only those modified at or after 'updatedSince'.")
+        .WithSummary("List customers, optionally only those modified at or after 'updatedSince'. 'maxReturned' caps the result; omit it to fetch all.")
         .Produces<IReadOnlyList<CustomerDto>>();
 
         group.MapGet("/{listId}", async (string listId, IQbRequestQueue queue, CancellationToken ct) =>

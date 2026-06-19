@@ -19,7 +19,8 @@ public static class CustomerMapper
     /// Build a CustomerQueryRq. qbXML's schema forbids combining a ListID filter with the
     /// modified-date filter, so we branch: a single-record lookup OR a (possibly filtered) list query.
     /// </summary>
-    public static string BuildQueryRequest(string qbXmlVersion, DateTimeOffset? updatedSince, string? listId)
+    public static string BuildQueryRequest(string qbXmlVersion, DateTimeOffset? updatedSince, string? listId,
+        int? maxReturned = null, IteratorMode iterator = IteratorMode.None, string? iteratorId = null)
     {
         var rq = new XElement("CustomerQueryRq", new XAttribute("requestID", "1"));
 
@@ -29,6 +30,12 @@ public static class CustomerMapper
         }
         else
         {
+            QbXml.ApplyIterator(rq, iterator, iteratorId);
+            if (maxReturned is { } max)
+            {
+                rq.Add(new XElement("MaxReturned", max.ToString(CultureInfo.InvariantCulture)));
+            }
+
             rq.Add(new XElement("ActiveStatus", "All"));
             if (updatedSince is { } since)
             {
